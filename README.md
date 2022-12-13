@@ -44,17 +44,18 @@ install.packages("sandwich")
 
 ### Data
 
-En la carpeta [`stores`] se encuentra información sobre los datos, los cuales son de reserva.
+En la carpeta [`stores`](https://github.com/josejparra/Proyecto-final---ML/tree/main/stores) se encuentra información sobre los datos, los cuales son de reserva.
 
 ### Scripts
 
 El proyecto cuenta con los siguientes scripts de R:
 
-* [`blocking_function.R`]
-* [`data_preprocessing.R`]
-* [`features_function.R`]
-* [`model_selection.R`]
-* [`phonetic_algorithm.py`]
+* [`blocking_function.R`](https://github.com/josejparra/Proyecto-final---ML/blob/main/scripts/blocking_function.R)
+* [`data_preprocessing.R`](https://github.com/josejparra/Proyecto-final---ML/blob/main/scripts/data_preprocessing.R)
+*[`descriptive_analysis.R`](https://github.com/josejparra/Proyecto-final---ML/blob/main/scripts/descriptive_analysis.R)
+* [`features_function.R`](https://github.com/josejparra/Proyecto-final---ML/blob/main/scripts/features_function.R)
+* [`model_selection.R`](https://github.com/josejparra/Proyecto-final---ML/blob/main/scripts/model_selection.R)
+* [`phonetic_algorithm.py`](https://github.com/josejparra/Proyecto-final---ML/blob/main/scripts/phonetic_algorithm.py)
 ### Informe
 
-El informe se encuentra en la carpeta [`files`], en formato pdf.
+El informe se encuentra en la carpeta [`files`](https://github.com/josejparra/Proyecto-final---ML/tree/main/files), en formato pdf.
