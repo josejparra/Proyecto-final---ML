@@ -288,21 +288,20 @@ formula <- match~strdist_FN+
 results_table_probit <- tibble()
 
 
-
 for (h in c("optimal_cutoff","rose","smote","up","down")){
-#  
+  
   #weight
-  for (i in seq(0,1,0.2)){
-    #
+  for (i in seq(0,1,0.5)){
+    
     #probability ratio
-    for (k in seq(1, 1.9, by = 0.01)){
-      #
+    for (k in seq(1, 2, by = 0.5)){
+      
       
       if(h=="optimal_cutoff"){
         
         
         #probability threshold
-        for (j in seq(.1, 0.9, by = 0.01)){
+        for (j in seq(0.3, 0.9, by = 0.3)){
           
           
           
@@ -475,17 +474,17 @@ results_table_logit <- tibble()
 for (h in c("optimal_cutoff","rose","smote","up","down")){
   
   #weight
-  for (i in seq(0,1,0.2)){
+  for (i in seq(0,1,0.5)){
     
     #probability ratio
-    for (k in seq(1, 1.9, by = 0.01)){
+    for (k in seq(1, 2, by = 0.5)){
       
       
       if(h=="optimal_cutoff"){
         
         
         #probability threshold
-        for (j in seq(.1, 0.9, by = 0.01)){
+        for (j in seq(0.3, 0.9, by = 0.3)){
           
           
           folds=10
@@ -651,17 +650,17 @@ results_table_xgboost <- tibble()
 for (h in c("optimal_cutoff","rose","smote","up","down")){
   
   #weight
-  for (i in seq(0,1,0.2)){
+  for (i in seq(0,1,0.5)){
     
     #probability ratio
-    for (k in seq(1, 1.9, by = 0.01)){
+    for (k in seq(1, 2, by = 0.5)){
       
       
       if(h=="optimal_cutoff"){
         
         
         #probability threshold
-        for (j in seq(.1, 0.9, by = 0.01)){
+        for (j in seq(0.3, 0.9, by = 0.3)){
           
           
           folds=10
@@ -850,3 +849,28 @@ for (h in c("optimal_cutoff","rose","smote","up","down")){
 
 
 results_table_xgboost
+
+
+
+# Best model --------------------------------------------------------------
+
+results <- results_table_xgboost %>% 
+  mutate("algorithm"="XGBoost") %>% 
+  bind_rows(
+    results_table_logit%>% 
+      mutate("algorithm"="Logit")
+    
+  ) %>% 
+  
+  bind_rows(
+    results_table_probit%>% 
+      mutate("algorithm"="Probit")
+    
+  ) %>% 
+  arrange(desc(ppv)) %>% 
+  filter(weighted_ppv_tpr>0.85)
+  
+results[1:8,] %>% 
+  kable(.,escape = F,format="latex", booktabs=T) %>% 
+  kable_styling()
+

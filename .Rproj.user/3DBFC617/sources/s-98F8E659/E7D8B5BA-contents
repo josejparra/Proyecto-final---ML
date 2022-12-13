@@ -1,0 +1,114 @@
+---
+title: "Summary census of Medellín (1859)"
+author: "José Parra"
+date: "10/1/2021"
+output: pdf_document
+---
+
+```{r global-options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE,warning=FALSE, message=FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(readr)
+library(pander)
+census_clean <- read_csv("census_clean.csv")
+
+```
+
+
+The census of 1859 was ordered under the law "Ley Primera de Abril de 1859" that ordered a national census of the "Confederación Granadina" (currently the Republic of Colombia and the Republic of Panamá). It was the sixth census carried out on the city of Medellín since its foundation on 1675. The census was organized by an unknown government official that assigned a group of comissioners to different sections of the city (mostly comprised of four blocks) delimited by four or five street names or reference points (bridges, borders with other districts, and private property); the digitalized document contains the data of 22 of these sections.
+
+The population surveyed include population of rural and urban areas; around 70% are urban residents. 
+
+```{r}
+pander(census_clean %>% 
+  tabyl(urban) %>% 
+  adorn_totals("row") %>%
+  adorn_pct_formatting() )
+```
+
+The census was carried out house to house gathering data on all the occupants of the house including name, age, gender, occupation, marital status, relationship to other occupants of the house, name of the male head of the house and name of the female head of the house, and whether the individual is the head of the househould or not. A summary of some of these variables follows.
+
+Population is a litle biased towards the female gender, but not by much.
+
+```{r}
+pander(census_clean %>% tabyl(sex)%>% 
+  adorn_totals("row") %>%
+  adorn_pct_formatting())
+```
+
+The mean age of population is 24 years and the median 20 years
+
+```{r}
+pander(summary(census_clean$age))
+```
+
+This is because population pyramid is biased towards younger ages.  
+
+```{r}
+data <- data.frame(Age=census_clean$age, Gender=census_clean$sex)
+
+
+ggplot(data=data,aes(x=Age,fill=Gender)) + 
+  geom_bar(data=subset(data,Gender=="Female"),width = 1) + 
+  geom_bar(data=subset(data,Gender=="Male"),aes(y=..count..*(-1)),width=1) + 
+  scale_y_continuous(breaks=seq(-200,200,40),labels=abs(seq(-200,200,40))) + 
+  coord_flip()
+
+
+```
+
+
+Age by gender shows that mean female age is higher but only for a year in average.
+
+```{r}
+options(dplyr.summarise.inform = FALSE)
+
+pander(census_clean %>% 
+         group_by(sex) %>% 
+         summarise(Mean=mean(age,na.rm=TRUE)))
+
+```
+
+Individuals are mostly single; a consequence of a young population.
+
+```{r}
+pander(census_clean %>% tabyl(condition)%>% 
+  adorn_totals("row") %>%
+  adorn_pct_formatting())
+```
+
+The most common relationship between the population is that of paternity followed by marriage and financial dependence. 
+
+```{r}
+pander(census_clean %>% tabyl(relationship)%>% 
+  adorn_totals("row") %>%
+  adorn_pct_formatting())
+```
+
+As expected, household heads are mostly male.
+
+```{r}
+pander(census_clean %>% tabyl(householdhead,sex)%>% 
+  adorn_totals("row"))
+```
+
+And also mostly married if male or mostly widowed if female.
+ 
+```{r}
+pander((census_clean %>% tabyl(condition,householdhead,sex) %>% adorn_totals("row"))[1:2])
+```
+
+Individuals economic activities are quite diverse and specific. Some of the most common are artisan, farmer, serf and individuals classified as inactive which include children, and financially dependent people. As expected from the time period, activities that involve some form of institutional training rank low on frequency.
+
+```{r}
+pander(census_clean %>% tabyl(activity)%>% 
+  arrange(desc(n)) %>% 
+  adorn_pct_formatting())
+
+```
+
+

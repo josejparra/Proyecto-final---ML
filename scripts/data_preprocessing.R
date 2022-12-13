@@ -16,18 +16,25 @@ library(caret)
 
 registerDoParallel(cores=4)
 
+
 # READING DATA ------------------------------------------------------------
 
 
 
-census_1859 <- read.xlsx("./datasets/clean_census_1859_v2.xlsx") %>% mutate(id_1859=as.numeric(id_1859))
-census_1869 <- read.xlsx("./datasets/clean_census_1869.xlsx") %>% 
-  rowid_to_column("id_1869") %>% mutate(id_1869=as.numeric(id_1869))
+census_1859 <- read.xlsx("./stores/clean_census_1859_v2.xlsx") %>% 
+  mutate(id_1859=as.numeric(id_1859))  %>% 
+  mutate(relationship=ifelse(relationship=="offspring","child",relationship))
+
+census_1869 <- read.xlsx("./stores/clean_census_1869.xlsx") %>% 
+  rowid_to_column("id_1869") %>% 
+  mutate(id_1869=as.numeric(id_1869))%>% 
+  mutate(relationship=ifelse(relationship=="offspring","child",relationship))
 
 
 
-source("blocking_function.R")
-source("features_function.R")
+
+source("./scripts/blocking_function.R")
+source("./scripts/features_function.R")
 
 # BLOCK CREATION ----------------------------------------------------------
 
@@ -72,8 +79,7 @@ hand_match <- census_1859 %>% select(id_1859,individual_name,gender,relationship
 
 #Leer match hecho a mano
 
-hand_match_w_links <- read.xlsx("./datasets/hand_match_w_links.xlsx")
-
+hand_match_w_links <- read.xlsx("./stores/hand_match_w_links.xlsx")
 
 
 # Explanatory variables ---------------------------------------------------
@@ -94,6 +100,7 @@ curated_matches_2 <- hand_match_w_links %>%
   right_join(.,explanatory_variables,
              by=c("id_1859","id_1869")) %>% 
   filter(!is.na(match))
+  
 
 levels(curated_matches_2$match) <- c("false","true")
 

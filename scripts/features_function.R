@@ -14,7 +14,7 @@ registerDoParallel(cores=4)
 # FUNCTION TO CREATE EXPLANATORY VARIABLES ----------------------------------
 
 #Llamar script con funcion de distancia fonetica; no existe en R para español.
-reticulate::source_python("phonetic_algorithm.py")
+reticulate::source_python("./scripts/phonetic_algorithm.py")
 
 match_variables_creation <- function(dataset_a,dataset_b,possible_matches,year_census_a,year_census_b){
   

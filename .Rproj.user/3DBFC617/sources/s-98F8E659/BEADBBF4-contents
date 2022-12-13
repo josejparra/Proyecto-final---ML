@@ -1,0 +1,253 @@
+
+library(stringr)
+library(doParallel)
+library(foreach)
+library(caret)
+library(reticulate)
+library(rlang)
+library(tidyverse)
+
+prop.table(table(curated_matches_2$match))
+
+set.seed(1)
+split1 <- createDataPartition(curated_matches_2$match , p = 0.8)[[1]]
+
+#separar en entrenamiento y testeo
+train=curated_matches_2[split1,]
+test=curated_matches_2[-split1,]
+
+#Verificar que respetan las proporciones
+prop.table(table(train$match))
+prop.table(table(test$match))
+
+
+#TODAS LAS VARIABLES
+formula <- match~strdist_FN+
+  strdist_LN+
+  hits+
+  hits_2+
+  exact+
+  exact_all+
+  gender_exact+
+  lsoundex+
+  fsoundex+
+  exact_mult+
+  f_name_subset+
+  middle_name_not_empty_strdist_mn_2+
+  second_lastname_not_empty_strdist_sln_2+
+  m_start+
+  relationship_offspring+
+  father_ln_not_empty_father_fn_not_empty+
+  mother_fn_not_empty_mother_ln_not_empty+
+  relationship_offspring_father_fn_not_empty_strdist_father_fn+
+  relationship_offspring_father_ln_not_empty_strdist_father_ln+
+  relationship_offspring_mother_fn_not_empty_strdist_mother_fn+
+  relationship_offspring_mother_ln_not_empty_strdist_mother_ln+
+  unique_gender+
+  unique_f_n_exact
+
+
+
+
+#VERSION NUEVA
+
+
+results_table_xgboost <- tibble()
+
+
+
+for (h in c("optimal_cutoff","rose","smote","up","down")){
+  
+  #weight
+  for (i in seq(0,1,0.5)){
+    
+    #probability ratio
+    for (k in seq(1, 2, by = 0.5)){
+      
+      
+      if(h=="optimal_cutoff"){
+        
+        
+        #probability threshold
+        for (j in seq(0.3, 0.9, by = 0.3)){
+          
+          
+          folds=10
+          cvIndex <- createFolds(factor(train$match), folds, returnTrain = T)
+          
+          #TRAIN CONTROL
+          train_control <- trainControl(method="cv", 
+                                        number=10, 
+                                        savePredictions = TRUE,
+                                        classProbs=TRUE,
+                                        summaryFunction = function(...) train_weighed_tpr_ppv(...,weight=i,
+                                                                                              id_a="id_sample_A",
+                                                                                              id_b="id_sample_B",
+                                                                                              data_w_ids=train,
+                                                                                              par_1=j,
+                                                                                              par_2=k))
+          
+          
+          grid_xgboost <- expand.grid(nrounds = c(100),
+                                      max_depth = c(2,4),
+                                      eta = c(0.01,0.1),
+                                      gamma = c(0,1),
+                                      min_child_weight = c(10, 20),
+                                      colsample_bytree = c(0.7),
+                                      subsample = c(0.6))
+          
+          
+          
+          #TRAIN MODEL
+          set.seed(1)
+          trained_model <- train(
+            formula,
+            data = train, 
+            method = "xgbTree",
+            trControl = train_control,
+            metric = "weighed_tpr_ppv",
+            tuneGrid = grid_xgboost,
+            preProc = c("center", "scale"),
+            maximize=TRUE,
+            verbosity=0,
+            allowParallel=T
+            
+          )
+          
+          
+          #PREDICTION
+          
+          prediction <-predict(trained_model,test,type="prob") %>% 
+            rowid_to_column("rowIndex") %>% 
+            bind_cols("obs"=test$match)
+          
+          
+          metrics <- test_weighed_tpr_ppv(prediction,
+                                          weight=i,
+                                          id_a="id_sample_A",
+                                          id_b="id_sample_B",
+                                          data_w_ids=test,
+                                          par_1=j,
+                                          par_2=k) 
+          
+          
+          results_table_xgboost <- results_table_xgboost %>% 
+            bind_rows(tibble(
+              "strategy"=h,
+              "weight"=i,
+              "probability_threshold"=metrics[[5]],
+              "probability_ratio"=metrics[[6]],
+              "weighted_ppv_tpr"=metrics[[3]],
+              "tpr"=metrics[[1]],
+              "ppv"=metrics[[2]]
+              
+              
+              
+            ))
+          
+          
+          
+          
+          print(j)
+          
+        }
+        
+        
+        
+      }else{
+        
+        folds=10
+        cvIndex <- createFolds(factor(train$match), folds, returnTrain = T)
+        
+        
+        #TRAIN CONTROL
+        
+        train_control <- trainControl(method="cv", 
+                                      number=10, 
+                                      index=cvIndex,
+                                      savePredictions = TRUE,
+                                      classProbs=TRUE,
+                                      sampling=h,
+                                      summaryFunction = function(...) train_weighed_tpr_ppv(...,weight=i,
+                                                                                            id_a="id_sample_A",
+                                                                                            id_b="id_sample_B",
+                                                                                            data_w_ids=train,
+                                                                                            par_1=j,
+                                                                                            par_2=k))
+        
+        
+        grid_xgboost <- expand.grid(nrounds = c(250,500),
+                                    max_depth = c(4,6,8),
+                                    eta = c(0.01,0.3,0.5),
+                                    gamma = c(0,1),
+                                    min_child_weight = c(10, 25,50),
+                                    colsample_bytree = c(0.7),
+                                    subsample = c(0.6))
+        
+        
+        
+        #TRAIN MODEL
+        set.seed(1)
+        trained_model <- train(
+          formula,
+          data = train, 
+          method = "xgbTree",
+          trControl = train_control,
+          metric = "weighed_tpr_ppv",
+          tuneGrid = grid_xgboost,
+          preProc = c("center", "scale"),
+          maximize=TRUE,
+          verbosity=0,
+          allowParallel=T
+          
+        )
+        
+        
+        
+        
+        prediction <-predict(trained_model,test,type="prob") %>% 
+          rowid_to_column("rowIndex") %>% 
+          bind_cols("obs"=test$match)
+        
+        
+        
+        
+        metrics <- test_weighed_tpr_ppv(prediction,
+                                        weight=i,
+                                        id_a="id_sample_A",
+                                        id_b="id_sample_B",
+                                        data_w_ids=test,
+                                        par_1=0.5,
+                                        par_2=k)
+        
+        
+        
+        results_table_xgboost <- results_table_xgboost %>% 
+          bind_rows(tibble(
+            "strategy"=h,
+            "weight"=i,
+            "probability_threshold"=metrics[[5]],
+            "probability_ratio"=metrics[[6]],
+            "weighted_ppv_tpr"=metrics[[3]],
+            "tpr"=metrics[[1]],
+            "ppv"=metrics[[2]]
+            
+            
+            
+          ))
+        
+        
+      }
+      
+      
+      print(k)
+      
+    }
+    
+    
+    print(i)
+  }  
+  
+  print(h)
+  
+}

@@ -1,0 +1,26 @@
+{
+    "id": "404D5F7A",
+    "path": "~/GitHub/Proyecto final/scripts/model_selection.R",
+    "project_path": "scripts/model_selection.R",
+    "type": "r_source",
+    "hash": "1816550087",
+    "contents": "",
+    "dirty": false,
+    "created": 1670803970745.0,
+    "source_on_save": false,
+    "relative_order": 4,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "875,0",
+        "scrollLine": "840"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1670913916,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1670913916756,
+    "read_only": false,
+    "read_only_alternatives": []
+}
